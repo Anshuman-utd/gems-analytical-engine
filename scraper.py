@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 
-async def collect_bid_result_urls(keyword: str, max_bids: int = 20) -> list[dict]:
+async def collect_bid_result_urls(keyword: str, max_bids: int = 50) -> list[dict]:
     bid_links = []
 
     async with async_playwright() as p:
@@ -247,11 +247,33 @@ def parse_financial_table(html: str, gem_bid_id: str) -> dict | None:
 
 def save(df: pd.DataFrame, path: str = "data/awards/laptop_aoc.csv"):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
+
+    # If previous data exists, merge with it
+    if Path(path).exists():
+        existing_df = pd.read_csv(path)
+
+        # Combine old + new
+        df = pd.concat([existing_df, df], ignore_index=True)
+
+        # Remove duplicates based on the GeM Bid ID
+        df = df.drop_duplicates(subset=["gem_bid_id"], keep="first")
+
+    # Save merged data
     df.to_csv(path, index=False, encoding="utf-8")
-    logger.info(f"Saved {len(df)} records → {path}")
+
+    logger.info(f"Saved {len(df)} total records → {path}")
     print("\n── FINAL DATA ──")
-    print(df[["gem_bid_id", "l1_price", "l2_price",
-              "num_bidders", "price_spread_pct"]].to_string())
+    print(
+        df[
+            [
+                "gem_bid_id",
+                "l1_price",
+                "l2_price",
+                "num_bidders",
+                "price_spread_pct",
+            ]
+        ].to_string(index=False)
+    )
 
 
 async def main():
