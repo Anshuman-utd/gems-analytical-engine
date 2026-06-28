@@ -98,7 +98,7 @@ def load_all_tenders(tender_dir: str = "data/tenders") -> dict:
     return tenders
 
 
-def load_aoc_data(csv_path: str = "data/awards/it_hardware.csv") -> pd.DataFrame:
+def load_aoc_data(csv_path: str = "data/bid_results/it_hardware_aoc.csv") -> pd.DataFrame:
     """
     Loads the historical AOC CSV that the scraper produced.
     Validates that essential columns exist before returning.
@@ -167,7 +167,7 @@ class DataPipeline:
     def __init__(
         self,
         tender_dir: str = "data/tenders",
-        awards_csv: str = "data/awards/it_hardware.csv"
+        awards_csv: str = "data/bid_results/it_hardware_aoc.csv"
     ):
         self.tender_dir = tender_dir
         self.awards_csv = awards_csv

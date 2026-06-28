@@ -452,7 +452,7 @@ def parse_financial_table(html: str, gem_bid_id: str) -> dict | None:
     return record
 
 
-def save(df: pd.DataFrame, path: str = "data/awards/it_hardware.csv"):
+def save(df: pd.DataFrame, path: str = "data/bid_results/it_hardware_aoc.csv"):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
 
     # If previous data exists, merge with it
