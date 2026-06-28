@@ -67,12 +67,6 @@ async def collect_bid_result_urls(keyword: str, max_bids: int = 50) -> list[dict
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(3000)
 
-            # Save screenshot for debugging
-            await page.screenshot(
-                path=f"search_{keyword}.png",
-                full_page=True
-            )
-
             logger.info(f"Search completed. URL: {page.url}")
 
             cards = await page.locator("a[href*='getBidResultView']").count()
@@ -493,12 +487,12 @@ async def main():
     
 
     keywords = [
-    "laptop"
+        'macbook'
     ]
 
     for keyword in keywords:
         logger.info(f"Processing keyword: {keyword}")
-        bid_links = await collect_bid_result_urls(keyword, 20)
+        bid_links = await collect_bid_result_urls(keyword, 100)
 
         if not bid_links:
             continue
