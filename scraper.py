@@ -183,7 +183,7 @@ async def collect_bid_result_urls(keyword: str, max_bids: int = 50) -> list[dict
     return bid_links
 
 
-async def scrape_all_results(bid_links: list[dict]) -> pd.DataFrame:
+async def scrape_all_results(bid_links: list[dict],product_keyword: str) -> pd.DataFrame:
     records = []
 
     pages_visited = 0
@@ -216,6 +216,7 @@ async def scrape_all_results(bid_links: list[dict]) -> pd.DataFrame:
 
                 html = await page.content()
 
+
                 pages_visited += 1
 
                 has_financial = "FINANCIAL EVALUATION" in html.upper()
@@ -225,7 +226,22 @@ async def scrape_all_results(bid_links: list[dict]) -> pd.DataFrame:
 
                 try:
 
-                    record = parse_financial_table(html, gem_bid_id)
+                    bid_details = parse_bid_details(html, gem_bid_id)
+
+                    technical = parse_technical_table(html, gem_bid_id)
+
+                    financial = parse_financial_table(html, gem_bid_id)
+
+                    record = None
+
+                    if financial:
+
+                        record = {}
+
+                        record.update(bid_details)
+                        record.update(technical)
+                        record.update(financial)
+                        record["product_category"] = product_keyword.lower().strip()
 
                     if record:
 
@@ -270,22 +286,22 @@ async def scrape_all_results(bid_links: list[dict]) -> pd.DataFrame:
 
                     if has_financial:
 
-                        filename = (
-                            f"failed_{gem_bid_id.replace('/', '_')}.html"
-                        )
+                            filename = (
+                                f"failed_{gem_bid_id.replace('/', '_')}.html"
+                            )
 
-                        with open(
-                            filename,
-                            "w",
-                            encoding="utf-8",
-                        ) as f:
-                            f.write(html)
+                            with open(
+                                filename,
+                                "w",
+                                encoding="utf-8",
+                            ) as f:
+                                f.write(html)
 
-                        saved_failed_pages += 1
+                            saved_failed_pages += 1
 
-                        logger.warning(
-                            f"Saved parser failure -> {filename}"
-                        )
+                            logger.warning(
+                                f"Saved parser failure -> {filename}"
+                            )
 
             except Exception as e:
 
@@ -418,14 +434,14 @@ def parse_financial_table(html: str, gem_bid_id: str) -> dict | None:
 
     for bidder in bidders:
 
-        if "L1" in bidder["rank"]:
+        if bidder["rank"] == "L1":
             record["l1_price"] = bidder["price"]
             record["l1_seller"] = bidder["seller"]
 
-        elif "L2" in bidder["rank"]:
+        elif bidder["rank"] == "L2":
             record["l2_price"] = bidder["price"]
 
-        elif "L3" in bidder["rank"]:
+        elif bidder["rank"] == "L3":
             record["l3_price"] = bidder["price"]
 
     if record["l1_price"] is None:
@@ -451,6 +467,279 @@ def parse_financial_table(html: str, gem_bid_id: str) -> dict | None:
 
     return record
 
+def parse_bid_details(html: str, gem_bid_id: str):
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    record = {
+        "bid_status": None,
+        "quantity": None,
+        "bid_start": None,
+        "bid_end": None,
+        "bid_opening": None,
+        "bid_validity_days": None,
+        "turnover_required_lakhs": None,
+        "experience_required_years": None,
+        "ministry": None,
+        "department": None,
+        "organisation": None,
+        "office": None,
+        "state": None,
+    }
+
+    # -------------------------------------------------------
+    # Find Bid Details section only
+    # -------------------------------------------------------
+    bid_heading = soup.find(
+        lambda tag:
+            tag.name in ["div", "h3", "h4", "span"]
+            and "BID DETAILS" in tag.get_text(" ", strip=True).upper()
+    )
+
+    search_root = soup
+
+    if bid_heading:
+        parent = bid_heading.parent
+        if parent:
+            search_root = parent
+
+    # -------------------------------------------------------
+    # Read every <strong> inside Bid Details
+    # -------------------------------------------------------
+    for strong in search_root.find_all("strong"):
+
+        label = " ".join(
+            strong.get_text(" ", strip=True)
+            .replace(":", "")
+            .split()
+        )
+
+        value_tag = strong.find_next_sibling("span")
+
+        if value_tag is None:
+            continue
+
+        value = " ".join(
+            value_tag.get_text(" ", strip=True).split()
+        )
+
+        logger.info(
+            f"[{gem_bid_id}] LABEL='{label}' VALUE='{value}'"
+        )
+
+        # --------------------------
+        # Bid Status
+        # --------------------------
+        if "Bid Status" in label:
+            record["bid_status"] = value
+
+        # --------------------------
+        # Quantity
+        # --------------------------
+        elif "Quantity" in label:
+
+            m = re.search(r"\d+", value)
+
+            if m:
+                record["quantity"] = int(m.group())
+
+        # --------------------------
+        # Dates
+        # --------------------------
+        elif "Bid Start Date" in label:
+            record["bid_start"] = value
+
+        elif "Bid End Date" in label:
+            record["bid_end"] = value
+
+        elif "Bid Opening Date" in label:
+            record["bid_opening"] = value
+
+        # --------------------------
+        # Validity
+        # --------------------------
+        elif "Bid Validity" in label:
+
+            m = re.search(r"\d+", value)
+
+            if m:
+                record["bid_validity_days"] = int(m.group())
+
+        # --------------------------
+        # Turnover
+        # --------------------------
+        elif "Average Turn Over" in label:
+
+            m = re.search(r"\d+(\.\d+)?", value)
+
+            if m:
+                record["turnover_required_lakhs"] = float(m.group())
+
+        # --------------------------
+        # Experience
+        # --------------------------
+        elif "Experience with Gov" in label:
+
+            m = re.search(r"\d+", value)
+
+            if m:
+                record["experience_required_years"] = int(m.group())
+
+        # --------------------------
+        # Buyer Details
+        # --------------------------
+        elif "Ministry" in label:
+            record["ministry"] = value
+
+        elif "Department" in label:
+            record["department"] = value
+
+        elif "Organisation" in label:
+            record["organisation"] = value
+
+        elif "Office" in label:
+            record["office"] = value
+
+        elif "State" in label:
+            record["state"] = value
+
+    logger.info(
+        f"[{gem_bid_id}] Parsed Bid Details -> {record}"
+    )
+
+    return record
+
+def parse_technical_table(html: str, gem_bid_id: str) -> dict:
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    if "TECHNICAL EVALUATION" not in html.upper():
+        logger.warning(f"[{gem_bid_id}] Technical Evaluation section missing")
+        return {
+            "total_participants": 0,
+            "qualified_bidders": 0,
+            "disqualified_bidders": 0,
+            "qualified_mse": 0,
+            "qualified_mii": 0,
+        }
+
+    technical_table = None
+
+    for table in soup.find_all("table"):
+
+        headers = [
+            " ".join(
+                th.get_text(" ", strip=True).upper().split()
+            )
+            for th in table.find_all("th")
+        ]
+
+        logger.info(f"[{gem_bid_id}] Checking table headers -> {headers}")
+
+        if (
+            "SELLER NAME" in headers
+            and "OFFERED ITEM" in headers
+            and "PARTICIPATED ON" in headers
+            and "MSE/MII STATUS" in headers
+            and "STATUS" in headers
+        ):
+            technical_table = table
+            logger.info(f"[{gem_bid_id}] Correct technical table found.")
+            break
+
+    if technical_table is None:
+        logger.warning(f"[{gem_bid_id}] Technical table not found.")
+        return {
+            "total_participants": 0,
+            "qualified_bidders": 0,
+            "disqualified_bidders": 0,
+            "qualified_mse": 0,
+            "qualified_mii": 0,
+        }
+
+    headers = [
+        " ".join(
+            th.get_text(" ", strip=True).upper().split()
+        )
+        for th in technical_table.find_all("th")
+    ]
+
+    seller_idx = headers.index("SELLER NAME")
+    mse_idx = headers.index("MSE/MII STATUS")
+    status_idx = headers.index("STATUS")
+
+    logger.info(
+        f"[{gem_bid_id}] "
+        f"seller={seller_idx}, "
+        f"mse={mse_idx}, "
+        f"status={status_idx}"
+    )
+
+    total = 0
+    qualified = 0
+    disqualified = 0
+    mse = 0
+    mii = 0
+
+    rows = technical_table.find("tbody").find_all("tr")
+
+    for row in rows:
+
+        cells = row.find_all("td")
+
+        values = [
+            td.get_text(" ", strip=True)
+            for td in cells
+        ]
+
+        logger.info(f"[{gem_bid_id}] ROW -> {values}")
+
+        if len(cells) <= max(
+            seller_idx,
+            mse_idx,
+            status_idx,
+        ):
+            continue
+
+        total += 1
+
+        status = (
+            cells[status_idx]
+            .get_text(" ", strip=True)
+            .upper()
+        )
+
+        policy = (
+            cells[mse_idx]
+            .get_text(" ", strip=True)
+            .upper()
+        )
+
+        if status == "QUALIFIED":
+            qualified += 1
+
+            if "MSE" in policy:
+                mse += 1
+
+            if "MII" in policy:
+                mii += 1
+
+        else:
+            disqualified += 1
+
+    logger.info(
+        f"[{gem_bid_id}] SUCCESS -> "
+        f"Participants={total} "
+        f"Qualified={qualified}"
+    )
+
+    return {
+        "total_participants": total,
+        "qualified_bidders": qualified,
+        "disqualified_bidders": disqualified,
+        "qualified_mse": mse,
+        "qualified_mii": mii,
+    }
 
 def save(df: pd.DataFrame, path: str = "data/bid_results/it_hardware_aoc.csv"):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -487,17 +776,17 @@ async def main():
     
 
     keywords = [
-        'macbook'
+        'computer',
     ]
 
     for keyword in keywords:
         logger.info(f"Processing keyword: {keyword}")
-        bid_links = await collect_bid_result_urls(keyword, 100)
+        bid_links = await collect_bid_result_urls(keyword, 300)
 
         if not bid_links:
             continue
 
-        df = await scrape_all_results(bid_links)
+        df = await scrape_all_results(bid_links, keyword)
 
         if not df.empty:
             save(df)

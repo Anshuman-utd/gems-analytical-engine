@@ -120,6 +120,8 @@ def load_aoc_data(csv_path: str = "data/bid_results/it_hardware_aoc.csv") -> pd.
     before = len(df)
     df = df.drop_duplicates(subset=["gem_bid_id"])
     logger.info(f"Removed {before - len(df)} duplicate records")
+    df["turnover_required_lakhs"] = df["turnover_required_lakhs"].fillna(0)
+    df["experience_required_years"] = df["experience_required_years"].fillna(0)
 
     numeric_cols = [
         "l1_price",
@@ -127,7 +129,32 @@ def load_aoc_data(csv_path: str = "data/bid_results/it_hardware_aoc.csv") -> pd.
         "l3_price",
         "num_bidders",
         "price_spread_pct",
+        "bid_validity_days"
     ]
+
+    date_cols = [
+        "bid_start",
+        "bid_end",
+        "bid_opening",
+    ]
+
+    for col in date_cols:
+        df[col] = pd.to_datetime(
+            df[col],
+            format="%d-%m-%Y %H:%M:%S",
+            errors="coerce",
+        )
+
+    df["bid_duration_hours"] = (
+        df["bid_end"] - df["bid_start"]
+    ).dt.total_seconds() / 3600
+
+    df["opening_delay_minutes"] = (
+        df["bid_opening"] - df["bid_end"]
+    ).dt.total_seconds() / 60
+
+    df["start_month"] = df["bid_start"].dt.month
+    df["start_weekday"] = df["bid_start"].dt.weekday
 
     for col in numeric_cols:
         if col in df.columns:
@@ -193,7 +220,7 @@ class DataPipeline:
         if filename not in self.tenders:
             raise KeyError(f"Tender '{filename}' not loaded")
         return self.tenders[filename]["full_text"]
-
+ 
     def get_statistics(self):
         df = self.aoc_df
 
