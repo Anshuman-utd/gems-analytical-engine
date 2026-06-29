@@ -289,64 +289,67 @@ python3 main.py
 
 # Sample Output
 
-```
-==========================================================
+```text
+================================================================================
 GeM Tender Intelligence Report
-==========================================================
+================================================================================
 
 Tender
+------------------------------------------------------------
+File              : GeM-Bidding-9389923.pdf
+Quantity          : 15
 
-File:
-GeM-Bidding-9480384.pdf
+Product Requirements
+------------------------------------------------------------
+• No explicit technical specifications extracted.
 
-Quantity:
-4
+Compliance Results
+------------------------------------------------------------
+1. Vendor A — TechSupply India Pvt Ltd ✓
+2. Vendor B — GlobalIT Solutions ✗
+3. Vendor C — BharatTech Systems ✓  << SELECTED >>
 
-Compliance
+Selected Vendor Analysis
+------------------------------------------------------------
+Vendor            : Vendor C — BharatTech Systems
+Status            : ELIGIBLE ✓
 
-Vendor A
-ELIGIBLE
-
-Vendor B
-INELIGIBLE
-
-Vendor C
-ELIGIBLE
+Evaluation Matrix
+------------------------------------------------------------
+✓ Turnover
+✓ Experience
+✓ EMD
+ℹ MSE Preference (Purchase Preference Applicable)
+✓ Technical Specifications
+✓ Delivery Timeline
 
 Pricing Model
+------------------------------------------------------------
+Predicted Winning Price : ₹1,018,159.39
 
-Predicted Winning Price
-
-₹588,327
-
-MAE
-
-₹126,009
-
-RMSE
-
-₹188,674
-
-R²
-
-0.714
+Model Confidence
+------------------------------------------------------------
+Training Records  : 280
+Outliers Removed  : 40
+MAE               : ₹126,009
+RMSE              : ₹188,674
+R² Score          : 0.714
 
 Win Probability
+------------------------------------------------------------
+Vendor Bid        : ₹1,000,000.00
+Predicted L1      : ₹1,018,159.39
+Price Difference  : -1.78%
+Win Probability   : 78.65%
+Verdict           : STRONG
 
-Vendor Bid
-
-₹585,000
-
-Win Probability
-
-76.97%
-
-Verdict
-
-STRONG
+Overall Summary
+------------------------------------------------------------
+Vendor Status         : ELIGIBLE ✓
+Estimated L1 Price    : ₹1,018,159.39
+Win Probability       : 78.65%
+================================================================================
 ```
-
----
 
 # Model Performance
 
