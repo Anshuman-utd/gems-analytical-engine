@@ -1,3 +1,4 @@
+import compliance_engine
 import pandas as pd
 
 from data_pipeline import DataPipeline
@@ -107,6 +108,20 @@ def main():
 
     compliance = run_compliance_check(tender_text)
 
+    print("\nAvailable Vendor Profiles\n")
+
+    print("\nAvailable Vendor Profiles\n")
+
+    vendors = compliance["vendors"]
+
+    for i, vendor in enumerate(vendors, start=1):
+        status = "✓" if vendor["is_eligible"] else "✗"
+        print(f"{i}. {vendor['vendor_name']} {status}")
+
+    vendor_choice = int(input("\nSelect Vendor : "))
+
+    selected_vendor = vendors[vendor_choice - 1]
+
     requirements = compliance["requirements"]
 
     metadata = compliance["metadata"]
@@ -185,14 +200,51 @@ def main():
         print("  • No explicit technical specifications extracted.")
 
     print("\nCompliance Results")
+    print("-" * 60)
 
-    for vendor in vendors:
+    for i, vendor in enumerate(vendors, start=1):
 
-        print("-" * 60)
+        marker = ">> SELECTED <<" if i == vendor_choice else ""
 
-        print(vendor["vendor_name"])
+        status = "✓" if vendor["is_eligible"] else "✗"
 
-        print(vendor["summary"])
+        print(
+            f"{i}. {vendor['vendor_name']} "
+            f"{status} {marker}"
+        )
+
+    print("-" * 60)
+
+    print("\nSelected Vendor Analysis")
+    print("-" * 60)
+
+    print(f"Vendor : {selected_vendor['vendor_name']}")
+    print(f"Status : {selected_vendor['summary']}")
+
+    print("\nEvaluation Matrix")
+    print("-" * 60)
+
+    for check_name, check in selected_vendor["checks"].items():
+
+        print(f"\n{check_name.replace('_', ' ').title()}")
+
+        if "pass" in check:
+            print("Status :", "PASS ✓" if check["pass"] else "FAIL ✗")
+
+        for key, value in check.items():
+
+            if key == "pass":
+                continue
+
+            print(f"{key.replace('_',' ').title()} : {value}")
+
+
+    if selected_vendor["failures"]:
+
+        print("\nReasons")
+
+        for failure in selected_vendor["failures"]:
+            print(f"• {failure}")
 
     print("\nPricing Model")
     print("-" * 60)
@@ -243,9 +295,14 @@ def main():
     print("\nOverall Summary")
     print("-" * 60)
 
-    eligible = sum(v["is_eligible"] for v in vendors)
+    print("Vendor Status")
 
-    print(f"Eligible Vendors      : {eligible}/{len(vendors)}")
+    if selected_vendor["is_eligible"]:
+        print("Eligible ✓")
+    else:
+        print("Ineligible ✗")
+
+    
 
     print(f"Estimated L1 Price    : ₹{predicted_price:,.2f}")
 
