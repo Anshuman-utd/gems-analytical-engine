@@ -190,6 +190,7 @@ A monotonicity test suite verifies that increasing bid prices always decrease wi
 | Web Scraping | Playwright, BeautifulSoup |
 | Data Cleaning | Pandas |
 | Logging | Python Logging |
+| UI | Streamlit |
 
 ---
 
