@@ -165,6 +165,7 @@ A monotonicity test suite verifies that increasing bid prices always decrease wi
 ├── pricing_model.py
 ├── win_probability.py
 ├── main.py
+├── app.py
 │
 ├── data
 │   ├── tenders
@@ -261,7 +262,7 @@ Very Weak      Strong
 
 # Running the Project
 
-## Install dependencies
+## 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -269,9 +270,9 @@ pip install -r requirements.txt
 
 ---
 
-## Configure environment variables
+## 2. Configure Environment Variables
 
-Create a `.env` file.
+Create a `.env` file in the project root.
 
 ```env
 GROQ_API_KEY=your_groq_api_key
@@ -279,15 +280,45 @@ GROQ_API_KEY=your_groq_api_key
 
 ---
 
-## Run
+## 3. Run the Command Line Interface
 
 ```bash
 python3 main.py
 ```
 
+The CLI allows you to:
+
+- Select a tender document
+- Select a vendor profile
+- Enter a proposed bid price
+- View:
+  - Compliance evaluation
+  - Predicted L1 price
+  - Win probability
+  - Overall procurement summary
+
 ---
 
-# Sample Output
+## 4. Launch the Streamlit Dashboard
+
+```bash
+streamlit run app.py
+```
+
+The dashboard provides an interactive interface for:
+
+- Tender selection
+- Vendor profile selection
+- Bid price analysis
+- AI-powered compliance checking
+- Machine learning price prediction
+- Historical pricing analytics
+- Dynamic win probability estimation
+- Vendor comparison dashboard
+
+---
+
+# Sample CLI Output
 
 ```text
 ================================================================================
@@ -351,51 +382,95 @@ Win Probability       : 78.65%
 ================================================================================
 ```
 
-# Model Performance
+---
 
-Current dataset:
+# Streamlit Dashboard
 
-- 360 historical GeM contract awards
-- 280 records used after cleaning
-- 40 outliers removed
+The project also includes a web-based Streamlit dashboard that provides an interactive interface for exploring tender intelligence.
 
-Performance:
+Dashboard features include:
 
-- MAE: ₹126,009
-- RMSE: ₹188,674
-- R² Score: 0.714
+- Tender selection
+- Vendor profile selection
+- Compliance evaluation
+- Product requirement extraction
+- Historical pricing analytics
+- Predicted L1 price
+- Win probability estimation
+- Vendor comparison
+- Executive summary
 
 ---
 
-# Key Highlights
+# Model Performance
 
-- AI-assisted tender understanding
-- Structured requirement extraction
-- Robust validation with Pydantic
-- Automatic fallback mechanism
+Current training dataset:
+
+- 360 historical GeM contract awards
+- 280 records used after preprocessing
+- 40 anomalous bids removed using IQR-based outlier filtering
+
+Model performance:
+
+| Metric | Value |
+|---------|-------|
+| MAE | ₹126,009 |
+| RMSE | ₹188,674 |
+| R² Score | 0.714 |
+
+---
+
+# Key Features
+
+- Automated GeM tender ingestion pipeline
+- AI-assisted tender requirement extraction using Llama 3 (Groq)
+- Structured validation using Pydantic
+- Deterministic compliance evaluation engine
+- Automatic fallback mechanism for invalid LLM outputs
 - Historical GeM pricing analytics
-- Outlier-aware ML prediction
-- Dynamic vendor win probability
-- Modular architecture for future extensions
+- Outlier-aware machine learning price prediction
+- Dynamic vendor win probability estimation
+- Interactive Streamlit dashboard
+- Modular, extensible project architecture
+
+---
+
+# Project Structure
+
+```
+.
+├── app.py
+├── main.py
+├── data_pipeline.py
+├── compliance_engine.py
+├── pricing_model.py
+├── win_probability.py
+├── scraper.py
+├── vendor_profiles.py
+├── data/
+│   ├── tenders/
+│   └── bid_results/
+├── requirements.txt
+└── README.md
+```
 
 ---
 
 # Future Improvements
 
-- Fine-tuned pricing model with larger historical datasets
-- OCR support for scanned tenders
-- Streamlit dashboard
-- Real-time GeM integration
-- Explainable AI (SHAP)
+- Larger historical training dataset for improved prediction accuracy
+- OCR support for scanned tender documents
+- Real-time GeM API integration
+- SHAP-based model explainability
 - Vector database for semantic tender search
-- Multi-vendor comparison dashboard
+- Advanced multi-vendor bid strategy recommendations
+- Interactive analytics and visualization enhancements
 
 ---
 
 # Author
 
 **Anshuman Mehta**
-
 
 ---
 
